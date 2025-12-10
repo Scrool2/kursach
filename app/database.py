@@ -1,25 +1,39 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 import os
 
-# Используем PostgreSQL на Render, SQLite локально
+
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "sqlite+aiosqlite:///./newshub.db"
-).replace("postgres://", "postgresql+asyncpg://")
-
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    future=True,
-    pool_size=20,
-    max_overflow=0
 )
 
+if DATABASE_URL.startswith("sqlite"):
+    # Для SQLite используем NullPool
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        connect_args={"check_same_thread": False},
+        poolclass=NullPool
+    )
+else:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=True,
+        pool_size=5,
+        max_overflow=10,
+        pool_pre_ping=True,  # Проверяем соединение перед использованием
+        pool_recycle=3600    # Пересоздаем соединения каждый час
+    )
+
+# Фабрика асинхронных сессий
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
-    expire_on_commit=False
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
 )
 
 class Base(DeclarativeBase):
@@ -30,8 +44,9 @@ async def get_db():
         try:
             yield session
             await session.commit()
-        except Exception:
+        except Exception as e:
             await session.rollback()
+            print(f"Database error: {e}")
             raise
         finally:
             await session.close()
