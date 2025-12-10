@@ -10,7 +10,6 @@ from app import crud, schemas, auth, models
 from app.database import engine, Base, get_db
 from app.parser.rss_parser import RUSSIA_SOURCES, RSSParser
 
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("🚀 Запуск NewsHub API...")
