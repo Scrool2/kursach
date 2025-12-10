@@ -9,7 +9,8 @@ aiohttp==3.9.1
 python-dotenv==1.0.0
 feedparser==6.0.10
 alembic==1.12.1
-psycopg2-binary==2.9.9  # Используем asyncpg вместо psycopg2 для async
+psycopg2-binary==2.9.9
 email-validator==2.1.0
 aiohttp
 feedparser
+asyncpg
