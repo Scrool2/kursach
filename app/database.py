@@ -10,7 +10,6 @@ DATABASE_URL = os.getenv(
 )
 
 if DATABASE_URL.startswith("sqlite"):
-    # Для SQLite используем NullPool
     engine = create_async_engine(
         DATABASE_URL,
         echo=True,
@@ -23,11 +22,10 @@ else:
         echo=True,
         pool_size=5,
         max_overflow=10,
-        pool_pre_ping=True,  # Проверяем соединение перед использованием
-        pool_recycle=3600    # Пересоздаем соединения каждый час
+        pool_pre_ping=True,
+        pool_recycle=3600
     )
 
-# Фабрика асинхронных сессий
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -36,8 +34,10 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False
 )
 
+
 class Base(DeclarativeBase):
     pass
+
 
 async def get_db():
     async with AsyncSessionLocal() as session:
